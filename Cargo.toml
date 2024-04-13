@@ -3,6 +3,8 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
-anyhow = "1.0.81"
-serde = "1.0.197"
-serde_json = "1.0.114"
+anyhow = "1.0"
+derive_builder = "0.20"
+serde = "1.0"
+serde_json = "1.0"
+thiserror = "1.0"
