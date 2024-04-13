@@ -3,7 +3,7 @@ use crate::{
   loc::Loc,
 };
 
-pub mod string;
+pub mod simple;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Chunk<'a> {
