@@ -2,7 +2,7 @@
 name = "ragkit-ai"
 description = "Rusty tools for AI"
 authors = ["Ragkit <hi@ragkit.com>"]
-version = "0.0.0"
+version = "0.0.1"
 edition = "2021"
 license = "MIT"
 documentation = "https://docs.rs/ragkit-ai/latest/ragkit-ai/"
@@ -10,12 +10,11 @@ repository = "https://github.com/ragkit/core"
 homepage = "https://github.com/ragkit/core"
 
 [dependencies]
-anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"]}
-serde_json = "1.0"
-
-[dev-dependencies]
-tokio = { version = "1", features = ["full"] }
+anyhow = { workspace = true }
+derive_builder = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
 
 [lib]
 path = "src/lib.rs"
