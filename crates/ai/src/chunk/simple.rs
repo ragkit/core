@@ -10,8 +10,8 @@ use crate::{
 use derive_builder::Builder;
 
 /// Simple chunking algorithm. Splits a string along character boundaries
-/// according to the `chunk_size``. This should not be used in practice. It
-/// serves as a reference point for more advanced chunking algorithms.
+/// according to the `chunk_size``. This should not be used on its own. It
+/// serves as a building block for more advanced chunking algorithms.
 #[derive(Default, Builder, Debug)]
 #[builder(setter(into))]
 #[builder(build_fn(error = "crate::error::Error"))]
