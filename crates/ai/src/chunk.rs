@@ -2,22 +2,48 @@ use crate::{
   error::Error,
   loc::Loc,
 };
+use serde::{
+  Deserialize,
+  Serialize,
+};
 
+pub mod recursive;
 pub mod simple;
 
-#[derive(Clone, Debug, PartialEq)]
+pub trait Chunker<'a> {
+  type Input;
+  fn chunk(&self, input: Self::Input) -> Result<Vec<Chunk<'a>>, Error>;
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum Chunk<'a> {
+  #[serde(borrow)]
   Simple(SimpleChunk<'a>),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+impl<'a> Chunk<'a> {
+  pub fn content(&'a self) -> &'a str {
+    match self {
+      Chunk::Simple(simple) => simple.content,
+    }
+  }
+
+  pub fn loc(&'a self) -> &'a Loc {
+    match self {
+      Chunk::Simple(simple) => &simple.loc,
+    }
+  }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct SimpleChunk<'a> {
   pub content: &'a str,
   pub loc: Loc,
 }
 
-pub trait Chunker<'a> {
-  type Input;
-  type Output;
-  fn chunk(&self, input: Self::Input) -> Result<Vec<Self::Output>, Error>;
+impl<'a> SimpleChunk<'a> {
+  pub fn as_chunk(self) -> Chunk<'a> {
+    Chunk::Simple(self)
+  }
 }
