@@ -54,6 +54,7 @@ impl<'a> Chunker<'a> for SimpleChunker {
           start: start + self.loc_offset,
           end: end + self.loc_offset,
         },
+        tags: Default::default(),
       }));
       start = end;
     }

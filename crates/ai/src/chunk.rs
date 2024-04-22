@@ -6,6 +6,7 @@ use serde::{
   Deserialize,
   Serialize,
 };
+use std::collections::HashMap;
 
 pub mod recursive;
 pub mod simple;
@@ -40,10 +41,18 @@ impl<'a> Chunk<'a> {
 pub struct SimpleChunk<'a> {
   pub content: &'a str,
   pub loc: Loc,
+  pub tags: HashMap<&'a str, Tag<'a>>,
 }
 
 impl<'a> SimpleChunk<'a> {
   pub fn as_chunk(self) -> Chunk<'a> {
     Chunk::Simple(self)
   }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct Tag<'a> {
+  pub key: &'a str,
+  pub value: &'a str,
+  pub loc: Loc,
 }

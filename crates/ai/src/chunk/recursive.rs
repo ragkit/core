@@ -38,11 +38,15 @@ impl<'a> Chunker<'a> for RecursiveChunker<'a> {
         .flat_map(|p| {
           match p {
             Part::String(s) => {
-              s.split(sep)
-                .flat_map(|p| vec![Part::Sep(sep), Part::String(p)])
-                // Remove the first separator; it's always a fake one.
-                .skip(1)
-                .collect::<Vec<Part<'a>>>()
+              if s.len() > chunk_size {
+                s.split(sep)
+                  .flat_map(|p| vec![Part::Sep(sep), Part::String(p)])
+                  // Remove the first separator; it's always a fake one.
+                  .skip(1)
+                  .collect::<Vec<Part<'a>>>()
+              } else {
+                vec![Part::String(s)]
+              }
             }
             Part::Sep(s) => vec![Part::Sep(s)],
           }
@@ -76,6 +80,7 @@ impl<'a> Chunker<'a> for RecursiveChunker<'a> {
             chunks.push(Chunk::Simple(SimpleChunk {
               content: &input[start..end],
               loc: Loc { start, end },
+              tags: Default::default(),
             }))
           }
           start = end;
@@ -141,5 +146,18 @@ mod tests {
       .map(|c| c.loc().as_tuple())
       .collect::<Vec<_>>();
     assert_eq!(vec![(0, 3), (4, 7), (9, 12), (14, 17)], locs);
+  }
+
+  #[test]
+  fn multi_sep_2() {
+    let chunker = RecursiveChunkerBuilder::default()
+      .chunk_size(10u32)
+      .separators(vec!["  ", " "])
+      .build()
+      .unwrap();
+
+    let chunks = chunker.chunk("000 111  222  333").unwrap();
+    let content = chunks.iter().map(|c| c.content()).collect::<Vec<_>>();
+    assert_eq!(vec!["000 111", "222", "333"], content);
   }
 }

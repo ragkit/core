@@ -2,7 +2,7 @@
 name = "ragkit-ai"
 description = "Rusty tools for AI"
 authors = ["Ragkit <hi@ragkit.com>"]
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 documentation = "https://docs.rs/ragkit-ai/latest/ragkit-ai/"
@@ -12,6 +12,7 @@ homepage = "https://github.com/ragkit/core"
 [dependencies]
 anyhow = { workspace = true }
 derive_builder = { workspace = true }
+regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
