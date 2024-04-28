@@ -1,6 +1,7 @@
 use crate::{
   error::Error,
   loc::Loc,
+  tag::Tag,
 };
 use serde::{
   Deserialize,
@@ -48,11 +49,4 @@ impl<'a> SimpleChunk<'a> {
   pub fn as_chunk(self) -> Chunk<'a> {
     Chunk::Simple(self)
   }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct Tag<'a> {
-  pub key: &'a str,
-  pub value: &'a str,
-  pub loc: Loc,
 }
