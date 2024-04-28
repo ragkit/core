@@ -9,10 +9,6 @@ pub trait Processor<Input, Output> {
   fn process(&self, input: Input) -> Result<Output, Error>;
 }
 
-// ============================================================================
-// Processor examples
-// ============================================================================
-
 pub struct IdentityProcessor;
 
 impl<Input> Processor<Input, Input> for IdentityProcessor {
@@ -30,38 +26,24 @@ where
   }
 }
 
-pub struct ToLowercase;
-
-impl<'a> Processor<&'a str, String> for ToLowercase {
-  fn process(&self, input: &'a str) -> Result<String, Error> {
-    Ok(input.to_ascii_lowercase())
-  }
-}
-
-pub struct Trimmer;
-
-impl<'a> Processor<&'a str, &'a str> for Trimmer {
-  fn process(&self, input: &'a str) -> Result<&'a str, Error> {
-    Ok(input.trim())
-  }
-}
-
 // ============================================================================
 // Pipeline definition
 // ============================================================================
 
-pub struct Pipeline<Input, Output, Intermediate, Curr, Prev>
+pub struct Pipeline<Input, Output, IntermediateOut, IntermediateIn, Curr, Prev>
 where
-  Curr: Processor<Intermediate, Output>,
-  Prev: Processor<Input, Intermediate>,
+  Curr: Processor<IntermediateIn, Output>,
+  Prev: Processor<Input, IntermediateOut>,
 {
   processor: Curr,
   prev: Prev,
-  phantom: PhantomData<(Input, Output, Intermediate)>,
+  phantom: PhantomData<(Input, Output, IntermediateOut, IntermediateIn)>,
 }
 
+// Creates a new pipeline. The "prev" processor will always be an
+// IdentityProcessor that does nothing.
 impl<Input, Output, Curr>
-  Pipeline<Input, Output, Input, Curr, IdentityProcessor>
+  Pipeline<Input, Output, Input, Input, Curr, IdentityProcessor>
 where
   Curr: Processor<Input, Output>,
 {
@@ -74,18 +56,20 @@ where
   }
 }
 
-impl<Input, Output, Intermediate, Curr, Prev>
-  Pipeline<Input, Output, Intermediate, Curr, Prev>
+impl<Input, Output, IntermediateOut, IntermediateIn, Curr, Prev>
+  Pipeline<Input, Output, IntermediateOut, IntermediateIn, Curr, Prev>
 where
-  Curr: Processor<Intermediate, Output>,
-  Prev: Processor<Input, Intermediate>,
+  Curr: Processor<IntermediateIn, Output>,
+  Prev: Processor<Input, IntermediateOut>,
+  IntermediateOut: Into<IntermediateIn>,
 {
-  pub fn chain<Next, P>(
+  pub fn chain<NextIn, NextOut, Next>(
     self,
-    processor: P,
-  ) -> Pipeline<Input, Next, Output, P, Self>
+    processor: Next,
+  ) -> Pipeline<Input, NextOut, Output, NextIn, Next, Self>
   where
-    P: Processor<Output, Next>,
+    Next: Processor<NextIn, NextOut>,
+    Output: Into<NextIn>,
     Self: Sized,
   {
     Pipeline {
@@ -97,15 +81,17 @@ where
 }
 
 // Pipelines themselves are also processors for their inputs and outputs.
-impl<Input, Output, Intermediate, Curr, Prev> Processor<Input, Output>
-  for Pipeline<Input, Output, Intermediate, Curr, Prev>
+impl<Input, Output, IntermediateOut, IntermediateIn, Curr, Prev>
+  Processor<Input, Output>
+  for Pipeline<Input, Output, IntermediateOut, IntermediateIn, Curr, Prev>
 where
-  Curr: Processor<Intermediate, Output>,
-  Prev: Processor<Input, Intermediate>,
+  Curr: Processor<IntermediateIn, Output>,
+  Prev: Processor<Input, IntermediateOut>,
+  IntermediateOut: Into<IntermediateIn>,
 {
   fn process(&self, input: Input) -> Result<Output, Error> {
     let intermediate = self.prev.process(input)?;
-    self.processor.process(intermediate)
+    self.processor.process(intermediate.into())
   }
 }
 
@@ -116,6 +102,22 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  pub struct ToLowercase;
+
+  impl<'a> Processor<&'a str, String> for ToLowercase {
+    fn process(&self, input: &'a str) -> Result<String, Error> {
+      Ok(input.to_ascii_lowercase())
+    }
+  }
+
+  pub struct Trimmer;
+
+  impl<'a> Processor<&'a str, &'a str> for Trimmer {
+    fn process(&self, input: &'a str) -> Result<&'a str, Error> {
+      Ok(input.trim())
+    }
+  }
 
   #[test]
   fn it_works() {
