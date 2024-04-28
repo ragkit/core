@@ -1,12 +1,5 @@
-use crate::{
-  document::Document,
-  element::Element,
-  error::Error,
-};
-
-pub trait Splitter<'a> {
-  fn split(&self, input: Document<'a>) -> Result<Vec<Element<'a>>, Error>;
-}
+use crate::error::Error;
+use std::marker::PhantomData;
 
 // ============================================================================
 // Processor definition
@@ -28,8 +21,9 @@ impl<Input> Processor<Input, Input> for IdentityProcessor {
   }
 }
 
-impl<Input, Output, T: Fn(Input) -> Result<Output, Error>>
-  Processor<Input, Output> for T
+impl<Input, Output, T> Processor<Input, Output> for T
+where
+  T: Fn(Input) -> Result<Output, Error>,
 {
   fn process(&self, input: Input) -> Result<Output, Error> {
     self(input)
@@ -56,43 +50,62 @@ impl<'a> Processor<&'a str, &'a str> for Trimmer {
 // Pipeline definition
 // ============================================================================
 
-pub struct Pipeline<Input, Output> {
-  processor: Box<dyn Processor<Input, Output> + 'static>,
+pub struct Pipeline<Input, Output, Intermediate, Curr, Prev>
+where
+  Curr: Processor<Intermediate, Output>,
+  Prev: Processor<Input, Intermediate>,
+{
+  processor: Curr,
+  prev: Prev,
+  phantom: PhantomData<(Input, Output, Intermediate)>,
 }
 
-impl<Input, Output> Pipeline<Input, Output> {
-  pub fn new<P>(processor: P) -> Self
-  where
-    P: Processor<Input, Output> + 'static,
-  {
+impl<Input, Output, Curr>
+  Pipeline<Input, Output, Input, Curr, IdentityProcessor>
+where
+  Curr: Processor<Input, Output>,
+{
+  pub fn new(processor: Curr) -> Self {
     Pipeline {
-      processor: Box::new(processor),
+      processor,
+      prev: IdentityProcessor,
+      phantom: PhantomData,
     }
   }
+}
 
-  pub fn chain<Next, NextOutput>(
+impl<Input, Output, Intermediate, Curr, Prev>
+  Pipeline<Input, Output, Intermediate, Curr, Prev>
+where
+  Curr: Processor<Intermediate, Output>,
+  Prev: Processor<Input, Intermediate>,
+{
+  pub fn chain<Next, P>(
     self,
-    next: Next,
-  ) -> Pipeline<Input, NextOutput>
+    processor: P,
+  ) -> Pipeline<Input, Next, Output, P, Self>
   where
-    Next: Processor<Output, NextOutput> + 'static,
-    Input: 'static,
-    Output: 'static,
+    P: Processor<Output, Next>,
+    Self: Sized,
   {
-    let closure = move |input: Input| -> Result<NextOutput, Error> {
-      let intermediate = self.processor.process(input)?;
-      next.process(intermediate)
-    };
     Pipeline {
-      processor: Box::new(closure),
+      processor,
+      prev: self,
+      phantom: PhantomData,
     }
   }
 }
 
 // Pipelines themselves are also processors for their inputs and outputs.
-impl<Input, Output> Processor<Input, Output> for Pipeline<Input, Output> {
+impl<Input, Output, Intermediate, Curr, Prev> Processor<Input, Output>
+  for Pipeline<Input, Output, Intermediate, Curr, Prev>
+where
+  Curr: Processor<Intermediate, Output>,
+  Prev: Processor<Input, Intermediate>,
+{
   fn process(&self, input: Input) -> Result<Output, Error> {
-    self.processor.process(input)
+    let intermediate = self.prev.process(input)?;
+    self.processor.process(intermediate)
   }
 }
 
