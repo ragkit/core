@@ -78,6 +78,10 @@ where
       phantom: PhantomData,
     }
   }
+
+  pub fn run(&self, input: impl Into<Input>) -> Result<Output, Error> {
+    self.process(input.into())
+  }
 }
 
 // Pipelines themselves are also processors for their inputs and outputs.

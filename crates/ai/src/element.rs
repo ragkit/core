@@ -21,3 +21,17 @@ pub struct SimpleElement<'a> {
   pub loc: Loc,
   pub tags: HashMap<&'a str, Tag<'a>>,
 }
+
+impl<'a> Element<'a> {
+  pub fn content(&'a self) -> &'a str {
+    match self {
+      Element::Simple(simple) => simple.content,
+    }
+  }
+
+  pub fn loc(&'a self) -> &'a Loc {
+    match self {
+      Element::Simple(simple) => &simple.loc,
+    }
+  }
+}
