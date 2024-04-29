@@ -98,35 +98,3 @@ where
     self.processor.process(intermediate.into())
   }
 }
-
-// ============================================================================
-// Tests
-// ============================================================================
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  pub struct ToLowercase;
-
-  impl<'a> Processor<&'a str, String> for ToLowercase {
-    fn process(&self, input: &'a str) -> Result<String, Error> {
-      Ok(input.to_ascii_lowercase())
-    }
-  }
-
-  pub struct Trimmer;
-
-  impl<'a> Processor<&'a str, &'a str> for Trimmer {
-    fn process(&self, input: &'a str) -> Result<&'a str, Error> {
-      Ok(input.trim())
-    }
-  }
-
-  #[test]
-  fn it_works() {
-    let pipeline = Pipeline::new(Trimmer).chain(ToLowercase);
-    let x = pipeline.process(" Hello, World! ").unwrap();
-    assert_eq!(x, "hello, world!")
-  }
-}

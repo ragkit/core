@@ -3,7 +3,7 @@ pub mod document;
 pub mod element;
 pub mod error;
 pub mod loc;
-pub mod processors;
+pub mod process;
 pub mod tag;
 pub mod traits;
 
@@ -11,12 +11,39 @@ pub mod traits;
 mod tests {
   use crate::{
     document::TextDocument,
-    processors::simple_splitter::SimpleSplitterBuilder,
-    traits::Pipeline,
+    error::Error,
+    process::splitter::simple::SimpleSplitterBuilder,
+    traits::{
+      Pipeline,
+      Processor,
+    },
   };
 
+  pub struct ToLowercase;
+
+  impl<'a> Processor<&'a str, String> for ToLowercase {
+    fn process(&self, input: &'a str) -> Result<String, Error> {
+      Ok(input.to_ascii_lowercase())
+    }
+  }
+
+  pub struct Trimmer;
+
+  impl<'a> Processor<&'a str, &'a str> for Trimmer {
+    fn process(&self, input: &'a str) -> Result<&'a str, Error> {
+      Ok(input.trim())
+    }
+  }
+
   #[test]
-  fn it_works() {
+  fn basic_pipeline() {
+    let pipeline = Pipeline::new(Trimmer).chain(ToLowercase);
+    let x = pipeline.process(" Hello, World! ").unwrap();
+    assert_eq!(x, "hello, world!")
+  }
+
+  #[test]
+  fn basic_splitting() {
     let doc = TextDocument::new("hello world");
 
     let splitter = SimpleSplitterBuilder::default()
@@ -30,5 +57,28 @@ mod tests {
     let strings = elements.iter().map(|el| el.content()).collect::<Vec<_>>();
 
     assert_eq!(strings, vec!["hello", " worl", "d"])
+  }
+
+  #[test]
+  fn mvp() {
+    struct Named<'a> {
+      name: &'a str,
+    }
+
+    impl<'a> Named<'a> {
+      fn new(name: &'a str) -> Self {
+        Self { name }
+      }
+    }
+
+    impl<'a> Processor<&'a str, &'a str> for Named<'a> {
+      fn process(&self, input: &'a str) -> Result<&'a str, Error> {
+        Ok(input)
+      }
+    }
+
+    let pipeline =
+      Pipeline::new(Named::new("From prompt, find potentiall relevant wikis"))
+        .chain(Named::new("Execute"));
   }
 }

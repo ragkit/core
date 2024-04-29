@@ -43,3 +43,7 @@ publish *args:
 # Publish to cargo (basically `cargo publish`).
 publish-push *args:
   cargo publish {{ args }}
+
+# Run the demo.
+demo:
+  cargo run --bin demo
