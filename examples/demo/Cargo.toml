@@ -1,0 +1,17 @@
+[package]
+name = "ragkit-ai-demo"
+description = "Example"
+authors = ["Ragkit <hi@ragkit.com>"]
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+ragkit-ai = { path = "../../crates/ai" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+
+[[bin]]
+name = "demo"
+path = "src/main.rs"
