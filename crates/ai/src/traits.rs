@@ -7,6 +7,20 @@ use std::marker::PhantomData;
 
 pub trait Processor<Input, Output> {
   fn process(&self, input: Input) -> Result<Output, Error>;
+
+  // TODO: Not sure how helpful this is, can just handle errors in the process
+  // implementation itself.
+  fn on_err(&self, err: Error) -> Result<Output, Error> {
+    Err(err)
+  }
+
+  fn run(&self, input: Input) -> Result<Output, Error> {
+    let out = self.process(input);
+    match out {
+      Ok(o) => Ok(o),
+      Err(e) => self.on_err(e),
+    }
+  }
 }
 
 pub struct IdentityProcessor;

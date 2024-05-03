@@ -58,27 +58,4 @@ mod tests {
 
     assert_eq!(strings, vec!["hello", " worl", "d"])
   }
-
-  #[test]
-  fn mvp() {
-    struct Named<'a> {
-      name: &'a str,
-    }
-
-    impl<'a> Named<'a> {
-      fn new(name: &'a str) -> Self {
-        Self { name }
-      }
-    }
-
-    impl<'a> Processor<&'a str, &'a str> for Named<'a> {
-      fn process(&self, input: &'a str) -> Result<&'a str, Error> {
-        Ok(input)
-      }
-    }
-
-    let pipeline =
-      Pipeline::new(Named::new("From prompt, find potentiall relevant wikis"))
-        .chain(Named::new("Execute"));
-  }
 }
